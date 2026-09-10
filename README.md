@@ -2,6 +2,8 @@
 
 Holiday Events is a small internal company portal. Employees can browse upcoming holiday gatherings and register for an event.
 
+This project is managed as a DevOps CI/CD project.
+עןאט
 ## Requirements
 
 - Node.js 18 or later
