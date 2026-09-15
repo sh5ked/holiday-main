@@ -1,24 +1,6 @@
 ---
-- name: Prepare Holiday Events deployment server
+- name: Test deployment server
   hosts: deployment
-  become: true
-
   tasks:
-
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
-        update_cache: true
-
-    - name: Ensure Docker service is running
-      service:
-        name: docker
-        state: started
-        enabled: true
-
-    - name: Add shaked to docker group
-      user:
-        name: shaked
-        groups: docker
-        append: true
+    - name: Check connection
+      ping:
