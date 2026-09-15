@@ -25,5 +25,23 @@ pipeline {
             }
         }
 
+        stage('Test SSH to Deployment Server') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'holiday-deploy-ssh',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USER'
+                )]) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no \
+                            -i "$SSH_KEY" \
+                            "$SSH_USER@192.168.30.130" \
+                            "hostname"
+                    '''
+                }
+            }
+        }
+
     }
 }
+
