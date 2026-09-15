@@ -1,6 +1,97 @@
 ---
-- name: Test deployment server
+- name: Deploy Holiday Events application
   hosts: deployment
+  become: false
+
+  vars:
+    image_name: "ghcr.io/sh5ked/holiday-events:1.0"
+    container_name: "holiday-events"
+    host_port: "8081"
+    container_port: "3000"
+
+    # Credentials מגיעים מ-Jenkins בזמן הריצה
+    ghcr_username: "{{ lookup('env', 'GHCR_USER') }}"
+    ghcr_token: "{{ lookup('env', 'GHCR_TOKEN') }}"
+
   tasks:
-    - name: Check connection
-      ping:
+
+    - name: Login to GHCR
+      ansible.builtin.command:
+        argv:
+          - docker
+          - login
+          - ghcr.io
+          - --username
+          - "{{ ghcr_username }}"
+          - --password-stdin
+        stdin: "{{ ghcr_token }}"
+      no_log: true
+
+    - name: Pull Docker image
+      ansible.builtin.command:
+        argv:
+          - docker
+          - pull
+          - "{{ image_name }}"
+
+    - name: Check if old container is running
+      ansible.builtin.command:
+        argv:
+          - docker
+          - ps
+          - -q
+          - --filter
+          - "name=^{{ container_name }}$"
+      register: running_container
+      changed_when: false
+
+    - name: Stop old container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - stop
+          - "{{ container_name }}"
+      when: running_container.stdout != ""
+
+    - name: Check if old container exists
+      ansible.builtin.command:
+        argv:
+          - docker
+          - ps
+          - -a
+          - -q
+          - --filter
+          - "name=^{{ container_name }}$"
+      register: existing_container
+      changed_when: false
+
+    - name: Remove old container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - rm
+          - "{{ container_name }}"
+      when: existing_container.stdout != ""
+
+    - name: Start new container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - -d
+          - --name
+          - "{{ container_name }}"
+          - -p
+          - "{{ host_port }}:{{ container_port }}"
+          - "{{ image_name }}"
+
+    - name: Check application health through exposed port
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ host_port }}/health"
+        method: GET
+        status_code: 200
+        return_content: true
+      register: health_check
+      retries: 10
+      delay: 3
+      until: health_check.status == 200
