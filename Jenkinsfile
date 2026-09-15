@@ -25,18 +25,26 @@ pipeline {
             }
         }
 
-        stage('Test SSH to Deployment Server') {
+        stage('Ansible Deployment') {
             steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'holiday-deploy-ssh',
-                    keyFileVariable: 'SSH_KEY',
-                    usernameVariable: 'SSH_USER'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'ghcr-credentials',
+                        usernameVariable: 'GHCR_USER',
+                        passwordVariable: 'GHCR_TOKEN'
+                    ),
+                    sshUserPrivateKey(
+                        credentialsId: 'holiday-deploy-ssh',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no \
-                            -i "$SSH_KEY" \
-                            "$SSH_USER@192.168.30.130" \
-                            "hostname"
+                        ANSIBLE_HOST_KEY_CHECKING=False \
+                        ansible-playbook \
+                        -i inventory.ini \
+                        --private-key "$SSH_KEY" \
+                        deploy.yml
                     '''
                 }
             }
@@ -44,4 +52,3 @@ pipeline {
 
     }
 }
-
