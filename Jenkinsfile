@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('H/5 * * * *')
+        pollSCM('H/1 * * * *')
     }
 
     stages {
@@ -22,7 +22,10 @@ pipeline {
                 )]) {
                     sh '''
                         echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-                        docker tag holiday-events:1.0 ghcr.io/sh5ked/holiday-events:1.0
+
+                        docker tag holiday-events:1.0 \
+                            ghcr.io/sh5ked/holiday-events:1.0
+
                         docker push ghcr.io/sh5ked/holiday-events:1.0
                     '''
                 }
