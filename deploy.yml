@@ -4,7 +4,9 @@
   become: false
 
   vars:
-    image_name: "ghcr.io/sh5ked/holiday-events:1.0"
+    image_repository: "ghcr.io/sh5ked/holiday-events"
+    image_tag: "{{ image_tag }}"
+    image_name: "{{ image_repository }}:{{ image_tag }}"
     container_name: "holiday-events"
     host_port: "8081"
     container_port: "3000"
